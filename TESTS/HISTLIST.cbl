@@ -18,7 +18,7 @@
       *>          '..\..\DATA\COTAHIST.A1986.TXT'
       *>          '..\..\DATA\COTAHIST-NH.A1986.TXT'
                '..\..\DATA\DEMO-NH.TXT'
-      *>          ORGANISATION    IS INDEXED
+               ORGANISATION    IS LINE SEQUENTIAL
                ACCESS MODE     IS SEQUENTIAL
       *>          RECORD KEY      IS HIST-TIPREG
                FILE STATUS     IS WS-FS.
