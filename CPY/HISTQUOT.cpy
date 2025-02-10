@@ -22,6 +22,6 @@
            03 HIST-INDOPC       PIC X(01).
            03 HIST-DATVEN       PIC 9(08).
            03 HIST-FATCOT       PIC 9(07).
-           03 HIST-PTOEXE       PIC 9(07)V06
+           03 HIST-PTOEXE       PIC X(13).
            03 HIST-CODISI       PIC X(12).
            03 HIST-DISMES       PIC 9(03).
