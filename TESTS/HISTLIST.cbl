@@ -15,9 +15,10 @@
                SELECT HISTDATA ASSIGN TO
       *>          INSERT PATH HERE
       *>          NEED TO FIND A WAY TO REMOVE THE HEADER AND FOOTER
-      *>          '..\..\DATA\COTAHIST.A1986.TXT'
+      *>          '..\..\DATA\COTAHIST.A1986'
       *>          '..\..\DATA\COTAHIST-NH.A1986.TXT'
-               '..\..\DATA\DEMO-NH.TXT'
+      *>          '..\..\DATA\DEMO-NH.TXT'
+               '..\..\DATA\DemoCotacoesHistoricas12022003.TXT'
                ORGANISATION    IS LINE SEQUENTIAL
                ACCESS MODE     IS SEQUENTIAL
       *>          RECORD KEY      IS HIST-TIPREG
@@ -59,6 +60,7 @@
            88 FS-OK                VALUE 0.
        77 WS-EOF                   PIC X.
            88 EOF-OK               VALUE 'S' FALSE 'N'.
+       77 WS-CH-COUNT              PIC 99.
        77 WS-COUNT                 PIC 9(03) VALUE ZEROES.
        PROCEDURE DIVISION.
        MAIN-PROCEDURE.
@@ -108,12 +110,25 @@
             .
        P300-END.
 
-      *>  DATA DISPLAY
+      *>  DATA VALIDATE
        P310-START.
+            MOVE ZEROES TO WS-CH-COUNT
+            INSPECT FUNCTION REVERSE(WS-REGISTER)
+                    TALLYING WS-CH-COUNT FOR LEADING ' '
+
+            IF WS-CH-COUNT < 3 THEN
+                PERFORM P320-START THRU P320-END
+            END-IF
+            .
+       P310-END.
+
+      *>  DATA DISPLAY
+       P320-START.
             DISPLAY WS-REGISTER
             ADD 1 TO WS-COUNT
             DISPLAY '################################'
             DISPLAY '# *COUNT.: ' WS-COUNT'                 #'
+            DISPLAY '# *CHAR COUNT.: ' WS-CH-COUNT'             #'
             DISPLAY '# TIPREG.: ' WS-HIST-TIPREG'                  #'
             DISPLAY '# DATEEX.: ' WS-HIST-DATEEX'            #'
             DISPLAY '# DATEEX.: ' WS-HIST-DATEEX'            #'
@@ -143,8 +158,7 @@
             DISPLAY '# DISMES.: ' WS-HIST-DISMES'                 #'
             DISPLAY '################################'
             .
-       P310-END.
-
+       P320-END.
 
        P999-EXIT.
             CLOSE HISTDATA.
