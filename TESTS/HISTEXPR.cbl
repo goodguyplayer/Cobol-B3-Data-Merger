@@ -1,31 +1,34 @@
       ******************************************************************
       * Author:
       * Date: 2025/01/30
-      * Purpose: LIST / READ DATA FROM HISTORICAL QUOTATION FILE
+      * Purpose: READ DATA FROM HISTORICAL QUOTATION FILE AND THEN
+      *        WRITE THE DATA TO AN EXTERNAL TEXT FILE IN CSV FORMAT
       * Tectonics: cobc
       ******************************************************************
        IDENTIFICATION DIVISION.
-       PROGRAM-ID. HISTLIST.
+       PROGRAM-ID. HISTEXPR.
 
        ENVIRONMENT DIVISION.
        CONFIGURATION SECTION.
        SPECIAL-NAMES.
            INPUT-OUTPUT SECTION.
            FILE-CONTROL.
-               SELECT HISTDATA ASSIGN TO
-      *>          INSERT PATH HERE
-      *>          NEED TO FIND A WAY TO REMOVE THE HEADER AND FOOTER
-      *>          '..\..\DATA\COTAHIST.A1986'
-      *>          '..\..\DATA\COTAHIST-NH.A1986.TXT'
-      *>          '..\..\DATA\DEMO-NH.TXT'
+               SELECT INPUTDATA ASSIGN TO
                '..\..\DATA\DemoCotacoesHistoricas12022003.TXT'
                ORGANISATION    IS LINE SEQUENTIAL
                ACCESS MODE     IS SEQUENTIAL
-      *>          RECORD KEY      IS HIST-TIPREG
-               FILE STATUS     IS WS-FS.
+               FILE STATUS     IS WS-FS-1.
+
+               SELECT OUTPUTDATA ASSIGN TO
+               '..\..\DATA\OUTPUTTEST.TXT'
+               ORGANISATION    IS SEQUENTIAL
+               ACCESS MODE     IS SEQUENTIAL
+               FILE STATUS     IS WS-FS-2.
        DATA DIVISION.
        FILE SECTION.
-       FD HISTDATA.
+       FD INPUTDATA.
+           COPY HISTQUOT.
+       FD OUTPUTDATA.
            COPY HISTQUOT.
        WORKING-STORAGE SECTION.
        01 WS-REGISTER              PIC X(245).
@@ -56,7 +59,8 @@
            03 WS-HIST-PTOEXE       PIC X(13).
            03 WS-HIST-CODISI       PIC X(12).
            03 WS-HIST-DISMES       PIC 9(03).
-       77 WS-FS                    PIC 9(02).
+       77 WS-FS-1                  PIC 9(02).
+       77 WS-FS-2                  PIC 9(02).
            88 FS-OK                VALUE 0.
        77 WS-EOF                   PIC X.
            88 EOF-OK               VALUE 'S' FALSE 'N'.
@@ -64,11 +68,12 @@
        77 WS-COUNT                 PIC 9(03) VALUE ZEROES.
        PROCEDURE DIVISION.
        MAIN-PROCEDURE.
-            DISPLAY 'FILE READER'
-            PERFORM P100-START THRU P100-END.
-            PERFORM P200-START THRU P200-END.
-            PERFORM P300-START THRU P300-END.
-            PERFORM P999-EXIT.
+            PERFORM P100-START THRU P100-END
+            PERFORM P200-START THRU P200-END
+            PERFORM P300-START THRU P300-END
+            PERFORM P999-EXIT
+            .
+
 
       *>  INITIALIZER
        P100-START.
@@ -78,37 +83,61 @@
             .
        P100-END.
 
-      *>  FILE VALIDATE
-       P200-START.
-            OPEN INPUT HISTDATA
 
-            IF WS-FS EQUAL 35 THEN
-                DISPLAY 'FAILED TO LOAD DATA FILE, QUITTING...'
+       P200-START.
+            DISPLAY '################'
+            DISPLAY 'TESTING FILES...'
+            DISPLAY '################'
+            PERFORM P210-START THRU P210-END
+            PERFORM P220-START THRU P220-END
+            .
+       P200-END.
+
+
+      *>  FILE INPUT VALIDATE
+       P210-START.
+            OPEN INPUT INPUTDATA
+            IF WS-FS-1 EQUAL 35 THEN
+                DISPLAY 'FAILED TO LOAD INPUT FILE, QUITTING...'
                 PERFORM P999-EXIT
             END-IF
-            CLOSE HISTDATA
-           .
-       P200-END.
+            CLOSE INPUTDATA
+            .
+       P210-END.
+
+
+      *>  FILE OUTPUT VALIDATE/CREATE
+       P220-START.
+            OPEN EXTEND OUTPUTDATA
+            IF WS-FS-2 EQUAL 35 THEN
+                DISPLAY 'FAILED TO LOAD OUTPUT FILE, CREATING NEW...'
+                OPEN OUTPUT OUTPUTDATA
+            END-IF
+            CLOSE OUTPUTDATA
+            .
+       P220-END.
+
 
       *>  LINE READING
        P300-START.
-            OPEN INPUT HISTDATA
+            OPEN INPUT INPUTDATA EXTEND OUTPUTDATA
             PERFORM UNTIL EOF-OK
                IF FS-OK THEN
-                   READ HISTDATA INTO WS-REGISTER
+                   READ INPUTDATA INTO WS-REGISTER
                        AT END SET EOF-OK TO TRUE
                        NOT AT END
                            PERFORM P310-START THRU P310-END
                    END-READ
                ELSE
-                   DISPLAY 'ERROR WHILE READING FILE'
-                   DISPLAY 'ERROR CODE.: ' WS-FS
+                   DISPLAY 'ERROR WHILE READING/STORING DATA'
+                   DISPLAY 'ERROR CODE FS-1.: ' WS-FS-1
+                   DISPLAY 'ERROR CODE FS-2.: ' WS-FS-2
                    PERFORM P999-EXIT
                END-IF
             END-PERFORM
-
             .
        P300-END.
+
 
       *>  DATA VALIDATE
        P310-START.
@@ -116,13 +145,14 @@
             INSPECT FUNCTION REVERSE(WS-REGISTER)
                     TALLYING WS-CH-COUNT FOR LEADING ' '
 
-            IF WS-CH-COUNT < 3 THEN
+            IF WS-HIST-TIPREG = 01 THEN
                 PERFORM P320-START THRU P320-END
             END-IF
             .
        P310-END.
 
-      *>  DATA DISPLAY
+
+      *>  DATA DISPLAY - DEBUG
        P320-START.
             DISPLAY WS-REGISTER
             ADD 1 TO WS-COUNT
@@ -160,7 +190,15 @@
             .
        P320-END.
 
+
+      *>  DATA STORING
+       P330-START.
+
+       P330-END.
+
+
        P999-EXIT.
-            CLOSE HISTDATA.
+            CLOSE INPUTDATA
+            CLOSE OUTPUTDATA
             STOP RUN.
-       END PROGRAM HISTLIST.
+       END PROGRAM HISTEXPR.
