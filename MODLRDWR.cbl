@@ -19,7 +19,7 @@
                ACCESS MODE         IS SEQUENTIAL
                FILE STATUS         IS WS-FS-1.
                SELECT OUTPUTDATA ASSIGN TO
-                   LS-FILE-PATH-OUTPUT
+                   '..\DATA\OUTPUTINPUT.TXT'
                ORGANISATION        IS SEQUENTIAL
                ACCESS MODE         IS SEQUENTIAL
                FILE STATUS         IS WS-FS-2.
